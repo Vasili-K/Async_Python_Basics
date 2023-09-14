@@ -3,6 +3,9 @@ import time
 from aiohttp import ClientSession
 
 
+# the key "2a4ff86f9aaa70041ec8e82db64abf56" may be blocked
+# it easy to get your own
+
 async def get_weather(city):
     async with ClientSession() as session:
         url = f'http://api.openweathermap.org/data/2.5/weather'
