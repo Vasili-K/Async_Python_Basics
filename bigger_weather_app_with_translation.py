@@ -41,18 +41,37 @@ async def get_weather(city):
                 return "No data"
 
 
+async def get_translation(text, source, target):
+    async with ClientSession() as session:
+        url = 'https://libretranslate.de/translate'
+
+        data = {'q': text, 'source': source, 'target': target, 'format': 'text'}
+
+        async with session.post(url, json=data) as response:
+            print(response)
+            translate_json = await response.json()
+
+            try:
+                return translate_json['translatedText']
+            except KeyError:
+                return text
+
+
 async def handle(request):
-    city = request.rel_url.query['city']
+    city_translate = request.rel_url.query['city']
+    language = request.rel_url.query['lang']
 
-    weather = await get_weather(city)
+    city_en = await get_translation(city_translate, language, 'en')
 
-    weather_result = weather['weather']
+    weather = await get_weather(city_en)
+    weather_en = weather['weather']
+    weather_translate = await get_translation(weather_en, 'en', language)
 
+    result = {'city': city_translate, 'weather': weather_translate}
     temperature = weather['temperature']
     feels_like = weather['feels_like']
-    result = {'city': city, 'weather': weather_result, 'temperature': temperature, 'feels_like': feels_like}
 
-    await save_to_db(city, weather_result, 'English', temperature, feels_like)
+    await save_to_db(city_translate, weather_translate, language, temperature, feels_like)
 
     return web.Response(text=json.dumps(result, ensure_ascii=False))
 
